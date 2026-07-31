@@ -176,6 +176,13 @@ def paper(seed=1, n=2600, w=W, h=H, col='#000', op=0.045, rmax=1.2):
     return ''.join(g)
 
 
+def mix(a, b, t):
+    """t of the way from a to b."""
+    a, b = a.lstrip('#'), b.lstrip('#')
+    return '#%02X%02X%02X' % tuple(
+        int(int(a[i:i + 2], 16) * (1 - t) + int(b[i:i + 2], 16) * t) for i in (0, 2, 4))
+
+
 def shade(hexc, f):
     """f>1 lightens toward white, f<1 darkens."""
     h = hexc.lstrip('#')

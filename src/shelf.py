@@ -1,10 +1,14 @@
 # A (round 2) — illustrated organic. Every ingredient in the dataset drawn as the object it is,
 # stood on shelves, sorted by how many drinks call for it. The finding is the silhouette.
+#
+# The object art itself is a swappable treatment (src/treatments.py); TREATMENT picks one, and
+# SHELF_OUT names the file. Everything else — data, layout, encoding, type — is identical.
 from layout import *
+import treatments
+from treatments import GROUND, INK, FAINT
 
-GROUND = '#FFFFFF'
-INK = '#2E2A24'
-FAINT = '#A8A296'
+T = treatments.get()
+OUT_NAME = os.environ.get('SHELF_OUT') or 'shelf'
 
 rng = random.Random(5)
 items = sorted(USE.items(), key=lambda kv: (-kv[1], kv[0]))
@@ -14,130 +18,8 @@ def h_of(u):
     return 20 + 17.0 * math.sqrt(u)          # 37 at one drink, 130 at forty-two
 
 
-# ---------------------------------------------------------------- drawn objects
-def obj_tall(cx, by, h, col, q):
-    w = h * 0.34
-    nk = w * 0.17
-    p = [(cx - w / 2, by), (cx - w / 2, by - h * 0.50), (cx - w * 0.40, by - h * 0.60),
-         (cx - nk, by - h * 0.70), (cx - nk, by - h * 0.955), (cx - nk * 1.25, by - h * 0.975),
-         (cx - nk * 1.25, by - h), (cx + nk * 1.25, by - h), (cx + nk * 1.25, by - h * 0.975),
-         (cx + nk, by - h * 0.955), (cx + nk, by - h * 0.70), (cx + w * 0.40, by - h * 0.60),
-         (cx + w / 2, by - h * 0.50), (cx + w / 2, by)]
-    return spath(wob(p, max(0.4, w * 0.022), q), close=True), w
-
-
-def obj_short(cx, by, h, col, q):
-    w = h * 0.46
-    nk = w * 0.22
-    p = [(cx - w / 2, by), (cx - w / 2, by - h * 0.58), (cx - w * 0.36, by - h * 0.70),
-         (cx - nk, by - h * 0.78), (cx - nk, by - h * 0.95), (cx - nk * 1.3, by - h * 0.97),
-         (cx - nk * 1.3, by - h), (cx + nk * 1.3, by - h), (cx + nk * 1.3, by - h * 0.97),
-         (cx + nk, by - h * 0.95), (cx + nk, by - h * 0.78), (cx + w * 0.36, by - h * 0.70),
-         (cx + w / 2, by - h * 0.58), (cx + w / 2, by)]
-    return spath(wob(p, max(0.4, w * 0.022), q), close=True), w
-
-
-def obj_dash(cx, by, h, col, q):
-    w = h * 0.30
-    nk = w * 0.26
-    p = [(cx - w / 2, by), (cx - w / 2, by - h * 0.62), (cx - nk, by - h * 0.76),
-         (cx - nk, by - h * 0.92), (cx - nk * 1.5, by - h * 0.94), (cx - nk * 1.5, by - h),
-         (cx + nk * 1.5, by - h), (cx + nk * 1.5, by - h * 0.94), (cx + nk, by - h * 0.92),
-         (cx + nk, by - h * 0.76), (cx + w / 2, by - h * 0.62), (cx + w / 2, by)]
-    return spath(wob(p, max(0.4, w * 0.024), q), close=True), w
-
-
-def obj_jar(cx, by, h, col, q):
-    w = h * 0.62
-    p = [(cx - w / 2, by), (cx - w / 2, by - h * 0.74), (cx - w * 0.40, by - h * 0.84),
-         (cx - w * 0.40, by - h * 0.94), (cx - w * 0.46, by - h), (cx + w * 0.46, by - h),
-         (cx + w * 0.40, by - h * 0.94), (cx + w * 0.40, by - h * 0.84),
-         (cx + w / 2, by - h * 0.74), (cx + w / 2, by)]
-    return spath(wob(p, max(0.4, w * 0.020), q), close=True), w
-
-
-def obj_can(cx, by, h, col, q):
-    w = h * 0.44
-    p = [(cx - w / 2, by - h * 0.06), (cx - w * 0.46, by), (cx + w * 0.46, by),
-         (cx + w / 2, by - h * 0.06), (cx + w / 2, by - h * 0.94), (cx + w * 0.44, by - h),
-         (cx - w * 0.44, by - h), (cx - w / 2, by - h * 0.94)]
-    return spath(wob(p, max(0.4, w * 0.020), q), close=True), w
-
-
-def obj_citrus(cx, by, h, col, q):
-    r = h * 0.42
-    return rough_circle(cx, by - r, r, rng=q), r * 2
-
-
-def obj_cherry(cx, by, h, col, q):
-    r = h * 0.36
-    return rough_circle(cx, by - r, r, rng=q), r * 2
-
-
-def obj_sprig(cx, by, h, col, q):
-    w = h * 0.40
-    p = [(cx, by), (cx - w * 0.14, by - h * 0.42), (cx, by - h * 0.72),
-         (cx + w * 0.30, by - h * 0.92), (cx + w * 0.10, by - h),
-         (cx - w * 0.34, by - h * 0.80), (cx - w * 0.16, by - h * 0.50)]
-    return spath(wob(p, max(0.4, w * 0.03), q), close=True), w
-
-
-DRAW = {'tall': obj_tall, 'short': obj_short, 'dash': obj_dash, 'jar': obj_jar,
-        'can': obj_can, 'citrus': obj_citrus, 'cherry': obj_cherry, 'sprig': obj_sprig}
-
-
-CLIP = [0]
-
-
 def draw(name, uses, cx, by, chroma, seed, detail=True):
-    """Returns (svg, width). Every interior detail is clipped to the silhouette, and the highlight
-    is placed outside the label's footprint, so the two can never collide."""
-    q = random.Random(seed)
-    h = h_of(uses)
-    k = kind_of(name)
-    base = col_of(name)
-    if chroma < 1:
-        base = mix(base, GROUND, 1 - chroma)
-    d, w = DRAW[k](cx, by, h, base, q)
-    CLIP[0] += 1
-    cid = 'o%d' % CLIP[0]
-    g = ['<path d="%s" fill="%s" opacity="0.14" transform="translate(%.1f,%.1f)"/>'
-         % (d, INK, max(1.2, h * 0.030), max(1.0, h * 0.022))]
-    g.append('<path d="%s" fill="%s"/>' % (d, base))
-    if detail and h > 46:
-        g.append('<clipPath id="%s"><path d="%s"/></clipPath>' % (cid, d))
-        g.append('<g clip-path="url(#%s)">' % cid)
-        if k in ('tall', 'short', 'dash', 'can', 'jar'):
-            # highlight: a narrow bar hard against the left wall, clear of the label band
-            g.append('<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="%.1f" fill="#FFFFFF" '
-                     'opacity="0.26"/>'
-                     % (cx - w * 0.44, by - h * 0.56, max(1.6, w * 0.09), h * 0.48,
-                        max(0.8, w * 0.045)))
-            lab_y = by - h * 0.31
-            lab_h = h * 0.10
-            g.append('<path d="%s" fill="%s" opacity="0.92"/>'
-                     % (rbox(cx - w * 0.28, lab_y - lab_h, cx + w * 0.28, lab_y + lab_h, 0.35, q),
-                        mix(GROUND, '#FFFFFF', 0.55)))
-        if k == 'citrus':
-            r = h * 0.42
-            g.append('<path d="%s" fill="%s" opacity="0.55"/>'
-                     % (rough_circle(cx, by - r, r * 0.80, rng=q), '#FFF6E0'))
-            g.append('<path d="%s" fill="%s"/>' % (rough_circle(cx, by - r, r * 0.72, rng=q), base))
-            for i in range(7):
-                a = i * math.pi / 3.5 + q.uniform(-0.08, 0.08)
-                g.append('<path d="%s" stroke="#FFF6E0" stroke-width="%.1f" fill="none" opacity="0.9"/>'
-                         % (rough_line(cx, by - r, cx + r * 0.70 * math.cos(a),
-                                       by - r + r * 0.70 * math.sin(a), 0.5, q), max(1.0, r * 0.11)))
-        g.append('</g>')
-    g.append('<path d="%s" fill="none" stroke="%s" stroke-width="%.1f" opacity="0.9"/>'
-             % (d, INK if chroma > 0.7 else FAINT, 1.0 + 0.9 * min(1.0, h / 90)))
-    return ''.join(g), w
-
-
-def mix(a, b, t):
-    a, b = a.lstrip('#'), b.lstrip('#')
-    return '#%02X%02X%02X' % tuple(
-        int(int(a[i:i + 2], 16) * (1 - t) + int(b[i:i + 2], 16) * t) for i in (0, 2, 4))
+    return T.render(name, h_of(uses), cx, by, chroma, seed, fine=detail)
 
 
 # ---------------------------------------------------------------- the stack
@@ -173,12 +55,7 @@ def fit(label, maxw, size):
 
 
 def widths(row):
-    ws = []
-    for nm, u in row:
-        q = random.Random(hash(nm) & 0xffff)
-        _, w = DRAW[kind_of(nm)](0, 0, h_of(u), '#000', q)
-        ws.append(w)
-    return ws
+    return [T.width(kind_of(nm), h_of(u)) for nm, u in row]
 
 
 def shelf(row, by, chroma, label):
@@ -283,4 +160,4 @@ out.append(txt(ML, PH - 16, 'TheCocktailDB &#183; the 143 alcoholic cocktails on
                'or in its Cocktail category &#183; 579 ingredient slots, 177 distinct.',
                T_MICRO, INK, op=0.45))
 
-write('shelf.svg', ''.join(out), w=PW, h=PH, bg=GROUND)
+write(OUT_NAME + '.svg', ''.join(out), w=PW, h=PH, bg=GROUND)

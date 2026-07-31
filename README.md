@@ -22,7 +22,11 @@ python src/fetch.py          # 26 requests to TheCocktailDB, no key needed  -> d
 python src/prep.py           # derive the set and print every count         -> data/cocktails.json
 python src/shelf.py          # the poster                                   -> out/shelf.svg
 python src/render.py shelf 1000 1250                                     #  -> out/shelf.png
+python src/options.py        # every art treatment, judged side by side     -> out/options.png
 ```
+
+`TREATMENT=<key> SHELF_OUT=<name> python src/shelf.py` draws the poster with any of the treatments
+in `src/treatments.py` instead of the shipped one.
 
 `src/constellation.py` builds the alternate treatment of the same finding as a force-directed
 constellation — the version that lost the pick but is worth keeping.
@@ -74,10 +78,23 @@ Two craft rules are enforced in code rather than by eye, because both were shipp
   Labels wrap to two lines rather than truncate; the count sits on a fixed baseline so a wrapped name
   cannot push its number out of line.
 
+### The art was judged as options, and the shipped art won
+
+The open item on this piece was a second pass on the object art. On 2026-07-31 five drawn treatments
+of the same eight archetypes were built against the same data, layout and encoding — **cut paper**
+(no outline, flat colour, hard shadow-side cut), **botanical plate** (ink contour, inset wash,
+engraved hatch), **glass & liquid** (glass vessel, colour is the liquid, a waterline across the
+shelf), **riso two-plate** (colour block off-register under an ink key) and **apothecary label**
+(pale glass, colour carried by a label band). Each was judged on one screen: the whole poster as a
+thumbnail, plus a 1:1 strip of the eight archetypes at 130px, at 37px, and a real slice of the
+ninety at 37px and half chroma — the only test that matters being whether the tail stays a picket
+fence.
+
+**Verdict: keep the shipped art.** The five live on in `src/treatments.py` with the shipped one as
+`current`, so the comparison is rebuildable rather than remembered.
+
 ## Open
 
-- **The bottle and fruit art.** Currently eight archetypes. The next pass is options — several drawn
-  treatments of the same objects, judged side by side, before one is chosen.
 - **Interaction.** The piece is a static SVG. Hovering an ingredient to reveal the drinks that use it
   (and ghosting the rest of the shelf) is designed but not built.
 - **Ground.** White, chosen 2026-07-31 over the warm cream it was drafted on.
