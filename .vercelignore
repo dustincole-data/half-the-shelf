@@ -1,0 +1,9 @@
+# Only out/site/ is served (see vercel.json). Everything else is source the
+# host has no use for — and .chrome-profile is a throwaway headless profile
+# that the first CLI deploy uploaded whole.
+.chrome-profile/
+__pycache__/
+data/
+src/
+out/*
+!out/site/
