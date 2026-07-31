@@ -1,17 +1,18 @@
 # The shell the interactive piece lives in: markup, style and behaviour, kept apart from the
-# drawing so src/site.py stays about the drawing. __SVG__ / __ING__ / __DR__ are filled by site.py.
+# drawing so src/site.py stays about the drawing.
+# __SVG__ / __ING__ / __DR__ / __HUE__ / __INDEX__ / __SHELF_LINE__ / __ICON__ filled by site.py.
 
 PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Half the shelf pours one drink</title>
-<meta name="description" content="143 classic cocktails call for 177 ingredients. Ninety of them appear in exactly one drink and nothing else. Point at any bottle.">
+<meta name="description" content="143 classic cocktails call for 177 ingredients. Ninety-two of them pour exactly one drink and nothing else. Point at any bottle.">
 <meta name="theme-color" content="#ffffff">
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20d%3D%22M11%2030%20L11%2014%20L13.5%2010.5%20L13.5%203%20L18.5%203%20L18.5%2010.5%20L21%2014%20L21%2030%20Z%22%20fill%3D%22%231F9E8E%22%2F%3E%3Cpath%20d%3D%22M16%2030%20L16%203%20L18.5%203%20L18.5%2010.5%20L21%2014%20L21%2030%20Z%22%20fill%3D%22%2317786B%22%2F%3E%3Cpath%20d%3D%22M13%205.4%20L19%205.4%20L19%203%20L13%203%20Z%22%20fill%3D%22%230F5A50%22%2F%3E%3C%2Fsvg%3E">
+<link rel="icon" href="__ICON__">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#E9E7E2;font-family:'Century Gothic',Questrial,Futura,sans-serif;color:#2E2A24;
      -webkit-text-size-adjust:100%}
-#wrap{position:relative;width:min(100vw,1000px);margin:0 auto;background:#fff;
+#wrap{position:relative;width:min(100%,1000px);margin:0 auto;background:#fff;
       box-shadow:0 1px 24px rgba(0,0,0,.13)}
 svg{display:block;width:100%;height:auto}
 .o{cursor:pointer}
@@ -20,24 +21,29 @@ svg{display:block;width:100%;height:auto}
 /* pointing at one bottle ghosts the other 176 - the relationship the paper cannot show */
 #sheet.focus .o:not(.on)>*:not(.hit){opacity:.10}
 #sheet.buy .o:not(.on)>*:not(.hit){opacity:.09}
+@keyframes flash{0%,100%{opacity:1}35%{opacity:.12}}
+.o.flash>*:not(.hit){animation:flash .55s ease 2}
 
-#panel{position:absolute;left:62.4%;top:5.6%;width:30%;background:#fff;
-       border-left:calc(2px * var(--s)) solid #B23A26;padding:calc(9px * var(--s));
-       display:none;z-index:3}
-#panel.show{display:block}
-#panel h3{font-size:calc(15px * var(--s));font-weight:400;line-height:1.15}
-#panel .sub{font-size:calc(10px * var(--s));opacity:.55;margin-top:calc(3px * var(--s));
-            letter-spacing:calc(.6px * var(--s))}
-#panel ul{list-style:none;margin-top:calc(7px * var(--s));max-height:calc(290px * var(--s));
-          overflow:auto;scrollbar-width:thin}
-/* a long list is scrolled, not truncated; the fade says so instead of a cut-off row */
-#panel ul{-webkit-mask-image:linear-gradient(#000 calc(100% - 22px),transparent);
-          mask-image:linear-gradient(#000 calc(100% - 22px),transparent)}
-#panel ul.short{-webkit-mask-image:none;mask-image:none}
-#panel li{font-size:calc(10.5px * var(--s));line-height:1.65;opacity:.82;cursor:pointer;
-          white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#panel li:hover{opacity:1;color:#B23A26}
-#panel li b{font-weight:400;opacity:.45;font-size:calc(9px * var(--s))}
+/* The card is anchored to the bottle it is about, never parked at the top of the page: the
+   ninety-two live 900px down, and a readout you have to scroll away from to read is no readout. */
+#pop{position:absolute;width:252px;background:#fff;z-index:6;display:none;
+     border-left:2px solid #B23A26;padding:10px 12px 11px;
+     box-shadow:0 3px 16px rgba(0,0,0,.17)}
+#pop.show{display:block}
+#pop h3{font-size:16px;font-weight:400;line-height:1.15}
+#pop .sub{font-size:9.5px;opacity:.5;margin-top:3px;letter-spacing:.7px;text-transform:uppercase}
+#pop .one{font-size:15px;margin-top:9px;color:#B23A26;line-height:1.2;cursor:pointer}
+#pop .with{font-size:9.5px;opacity:.5;margin-top:9px;letter-spacing:.7px;text-transform:uppercase}
+#pop ul{list-style:none;margin-top:7px;max-height:216px;overflow:auto;scrollbar-width:thin;
+        columns:2;column-gap:12px}
+#pop ul.one-col{columns:1}
+#pop li{font-size:10.5px;line-height:1.62;opacity:.85;cursor:pointer;white-space:nowrap;
+        overflow:hidden;text-overflow:ellipsis;break-inside:avoid}
+#pop li:hover{opacity:1;color:#B23A26}
+#pop i{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:5px;
+       vertical-align:middle;font-style:normal}
+#pop ul.fade{-webkit-mask-image:linear-gradient(#000 calc(100% - 20px),transparent);
+             mask-image:linear-gradient(#000 calc(100% - 20px),transparent)}
 
 #bar{position:absolute;left:7.6%;top:24.5%;display:flex;gap:calc(7px * var(--s));z-index:4}
 button{font:inherit;font-size:calc(9.5px * var(--s));letter-spacing:calc(1.3px * var(--s));
@@ -47,33 +53,56 @@ button{font:inherit;font-size:calc(9.5px * var(--s));letter-spacing:calc(1.3px *
 button:hover{border-color:#B23A26;color:#B23A26}
 button.on{background:#B23A26;border-color:#B23A26;color:#fff}
 #count{position:absolute;left:7.6%;top:17.2%;width:52%;display:none;z-index:3}
-#sheet .deck{transition:opacity .2s ease}
-#sheet.buy .deck{opacity:0}
-/* the how-to-read block has done its job once the panel is open */
-#sheet .teach{transition:opacity .2s ease}
-#sheet.buy .teach,#sheet.focus .teach{opacity:0}
 #count.show{display:block}
-/* the ninety are ~7px wide on a phone: say how to get into them rather than pretend otherwise */
-#hint{display:none;padding:0 12px 10px;font-size:11px;letter-spacing:.5px;opacity:.5;
-      text-transform:uppercase;background:#fff}
+#sheet .deck,#sheet .teach{transition:opacity .2s ease}
+#sheet.buy .deck{opacity:0}
+#sheet.buy .teach,#sheet.focus .teach{opacity:0}
 #count .big{font-size:calc(31px * var(--s));line-height:1.15}
 #count em{font-style:normal;color:#B23A26}
 #count .lede{font-size:calc(12px * var(--s));opacity:.62;margin-top:calc(7px * var(--s));
              line-height:1.5;max-width:calc(430px * var(--s))}
+#hint{display:none;padding:0 12px 10px;font-size:11px;letter-spacing:.5px;opacity:.5;
+      text-transform:uppercase;background:#fff}
 
+/* the ninety-two, given the room the poster cannot give them */
+#ninety{width:min(100%,1000px);margin:0 auto 30px;background:#fff;padding:34px 76px 40px;
+        box-shadow:0 1px 24px rgba(0,0,0,.13);border-top:1px solid rgba(46,42,36,.13)}
+#ninety h2{font-size:31px;font-weight:400;line-height:1.15}
+#ninety .lede{font-size:13px;opacity:.66;margin-top:10px;line-height:1.65;max-width:640px}
+#ninety .lede b{font-weight:400;color:#B23A26}
+#grid{margin-top:26px;columns:3;column-gap:26px}
+#grid article{break-inside:avoid;margin-bottom:15px;padding-bottom:13px;
+              border-bottom:1px solid rgba(46,42,36,.10)}
+#grid h4{font-size:12.5px;font-weight:400;line-height:1.25}
+#grid h4 i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;
+           vertical-align:middle;font-style:normal}
+#grid h4 s{text-decoration:none;opacity:.4;font-size:10px}
+#grid ul{list-style:none;margin-top:5px}
+#grid li{font-size:10.5px;line-height:1.6;opacity:.62;cursor:pointer;padding-left:12px;
+         position:relative}
+#grid li:before{content:'';position:absolute;left:2px;top:.72em;width:5px;height:1px;
+                background:#B23A26;opacity:.6}
+#grid li:hover{opacity:1;color:#B23A26}
+
+@media (max-width:900px){#grid{columns:2}#ninety{padding:30px 40px 34px}}
 @media (max-width:719px){
-  #panel{position:fixed;left:0;top:auto;bottom:0;width:100%;max-height:54vh;overflow:auto;
-         border-left:0;border-top:3px solid #B23A26;padding:13px 15px 18px;
-         box-shadow:0 -2px 18px rgba(0,0,0,.16)}
-  #panel h3{font-size:19px}#panel .sub{font-size:11.5px;letter-spacing:.6px}
-  #panel ul{max-height:34vh}#panel li{font-size:13.5px;line-height:1.9}
-  #panel li b{font-size:11px}
+  /* a card pinned beside a 7px bottle is unusable; on a phone it becomes a sheet that is always
+     in frame, with targets a thumb can actually hit */
+  #pop{position:fixed!important;left:0!important;top:auto!important;bottom:0;width:100%;
+       max-height:56vh;overflow:auto;border-left:0;border-top:3px solid #B23A26;
+       padding:14px 16px 20px;box-shadow:0 -2px 18px rgba(0,0,0,.18)}
+  #pop h3{font-size:20px}#pop .sub{font-size:11px}#pop .one{font-size:19px}
+  #pop .with{font-size:11px}
+  #pop ul{max-height:32vh}#pop li{font-size:13px;line-height:1.95}
   #bar{position:static;display:flex;flex-wrap:wrap;padding:10px 12px;background:#fff;
        border-bottom:1px solid rgba(46,42,36,.14);gap:7px}
   button{font-size:11px;padding:9px 12px;border-width:1px}
   #count{position:static;width:auto;padding:13px 15px 3px}
-  #hint{display:block}
   #count .big{font-size:29px}#count .lede{font-size:13px;max-width:none}
+  #hint{display:block}
+  #ninety{padding:26px 18px 30px;margin-bottom:0}#grid{columns:1}
+  #ninety h2{font-size:25px}#grid li{font-size:12.5px;line-height:1.95}
+  #grid h4{font-size:14px}
 }
 </style></head><body>
 <div id="wrap">
@@ -81,84 +110,104 @@ button.on{background:#B23A26;border-color:#B23A26;color:#fff}
     <button id="mRead" class="on">Point at a bottle</button>
     <button id="mBuy">Buy the shelf</button>
   </div>
-  <div id="hint">Pinch to zoom · tap any bottle</div>
+  <div id="hint">Pinch to zoom &#183; tap any bottle</div>
   <div id="count"><div class="big"></div><div class="lede"></div></div>
-  <div id="panel"></div>
+  <div id="pop"></div>
   __SVG__
 </div>
+__INDEX__
 <script>
-var ING=__ING__, DR=__DR__;
-var sheet=document.getElementById('sheet'), panel=document.getElementById('panel'),
+var ING=__ING__, DR=__DR__, HUE=__HUE__;
+var sheet=document.getElementById('sheet'), pop=document.getElementById('pop'),
     wrap=document.getElementById('wrap'), countBox=document.getElementById('count'),
     bar=document.getElementById('bar');
 var nodes=Array.prototype.slice.call(sheet.querySelectorAll('.o'));
+var byIng={}; nodes.forEach(function(n){byIng[+n.dataset.i]=n});
 var uses={}; DR.forEach(function(d,di){d[2].forEach(function(i){(uses[i]=uses[i]||[]).push(di)})});
+function phone(){return matchMedia('(max-width:719px)').matches}
 
 var mode='read', owned={}, ownedN=0;
 
-/* keeps the overlay measured in the poster's own units at any width */
 function rescale(){wrap.style.setProperty('--s', wrap.clientWidth/1000)}
 addEventListener('resize',rescale); rescale();
 
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+function dot(base){return '<i style="background:'+(HUE[base]||'#B9A489')+'"></i>'}
 function lit(on){nodes.forEach(function(n){
-  if(on[+n.dataset.i]) n.classList.add('on'); else n.classList.remove('on');})}
+  if(on[+n.dataset.i]) n.classList.add('on'); else n.classList.remove('on')})}
 function only(list){var o={};list.forEach(function(i){o[i]=1});return o}
+
+/* Put the card against the bottle it is about: above by default, flipped below when it would run
+   off the top, clamped so it never leaves the page on either side. */
+function anchor(i){
+  if(phone()){pop.style.left='';pop.style.top='';return}
+  var n=byIng[i]; if(!n)return;
+  var b=n.getBBox(), s=wrap.clientWidth/1000;
+  var svgTop=sheet.getBoundingClientRect().top-wrap.getBoundingClientRect().top;
+  var cx=(b.x+b.width/2)*s, top=svgTop+b.y*s, bot=svgTop+(b.y+b.height)*s;
+  var pw=pop.offsetWidth, ph=pop.offsetHeight;
+  var y=top-ph-9; if(y<4) y=bot+9;
+  pop.style.left=Math.max(8,Math.min(wrap.clientWidth-pw-8,cx-pw/2))+'px';
+  pop.style.top=y+'px';
+}
+function fade(){var u=pop.querySelector('ul');
+  if(u){u.classList.toggle('one-col',u.children.length<7);
+        u.classList.toggle('fade',u.scrollHeight>u.clientHeight+1)}}
 
 function showIng(i){
   sheet.classList.add('focus'); lit(only([i]));
-  var ds=uses[i]||[];
-  panel.innerHTML='<h3>'+cap(ING[i][0])+'</h3><div class="sub">IN '+ING[i][1]
-    +' OF THE 143 DRINK'+(ING[i][1]==1?'':'S')+'</div><ul>'
-    +ds.map(function(di){return '<li data-d="'+di+'">'+DR[di][0]+' <b>'+DR[di][1]+'</b></li>'}).join('')
-    +'</ul>';
-  panel.classList.add('show'); wire(); fade();
+  var ds=uses[i]||[], h='<h3>'+cap(ING[i][0])+'</h3>';
+  if(ds.length===1){
+    var d=DR[ds[0]];
+    h+='<div class="sub">Pours one drink. Nothing else.</div>'
+      +'<div class="one" data-d="'+ds[0]+'">'+d[0]+'</div>'
+      +'<div class="with">Which also needs</div><ul>'
+      +d[2].filter(function(j){return j!==i}).map(function(j){
+         return '<li data-i="'+j+'">'+cap(ING[j][0])+'</li>'}).join('')+'</ul>';
+  } else {
+    h+='<div class="sub">'+ds.length+' of the 143 drinks</div><ul>'
+      +ds.map(function(di){return '<li data-d="'+di+'">'+dot(DR[di][1])+DR[di][0]+'</li>'}).join('')
+      +'</ul>';
+  }
+  pop.innerHTML=h; pop.classList.add('show'); wire(); fade(); anchor(i);
 }
 
 /* the jump back across the graph: a drink lights every bottle it needs */
 function showDrink(di){
   var d=DR[di];
   sheet.classList.add('focus'); lit(only(d[2]));
-  panel.innerHTML='<h3>'+d[0]+'</h3><div class="sub">'+d[2].length+' INGREDIENTS &#183; '
-    +d[1].toUpperCase()+'</div><ul>'
-    +d[2].map(function(i){return '<li data-i="'+i+'">'+cap(ING[i][0])+' <b>'+ING[i][1]
-      +(ING[i][1]==1?' drink':' drinks')+'</b></li>'}).join('')+'</ul>';
-  panel.classList.add('show'); wire(); fade();
+  pop.innerHTML='<h3>'+d[0]+'</h3><div class="sub">'+dot(d[1])+d[2].length
+    +' ingredients &#183; '+d[1]+'</div><ul>'
+    +d[2].map(function(i){return '<li data-i="'+i+'">'+cap(ING[i][0])+'</li>'}).join('')+'</ul>';
+  pop.classList.add('show'); wire(); fade(); anchor(d[2][0]);
 }
-
-/* only fade a list that actually overflows */
-function fade(){var u=panel.querySelector('ul');
-  if(u)u.classList.toggle('short',u.scrollHeight<=u.clientHeight+1)}
 
 function wire(){
-  panel.querySelectorAll('li[data-d]').forEach(function(li){
-    li.addEventListener('pointerup',function(e){e.stopPropagation();showDrink(+li.dataset.d)})});
-  panel.querySelectorAll('li[data-i]').forEach(function(li){
-    li.addEventListener('pointerup',function(e){e.stopPropagation();showIng(+li.dataset.i)})});
+  pop.querySelectorAll('[data-d]').forEach(function(el){
+    el.addEventListener('pointerup',function(e){e.stopPropagation();showDrink(+el.dataset.d)})});
+  pop.querySelectorAll('[data-i]').forEach(function(el){
+    el.addEventListener('pointerup',function(e){e.stopPropagation();showIng(+el.dataset.i)})});
 }
-
-function clear(){sheet.classList.remove('focus');panel.classList.remove('show');lit({})}
+function clear(){sheet.classList.remove('focus');pop.classList.remove('show');lit({})}
 
 function complete(){var m=0;for(var k=0;k<DR.length;k++){
   var d=DR[k][2],ok=1;for(var j=0;j<d.length;j++)if(!owned[d[j]]){ok=0;break}
   if(ok)m++} return m}
-function madeList(){return DR.filter(function(x){
-  return x[2].every(function(i){return !!owned[i]})})}
 
 function buyRender(){
   lit(owned);
   var m=complete(), n=ownedN;
-  countBox.querySelector('.big').innerHTML=n+' bottle'+(n==1?'':'s')
-    +' &#8594; <em>'+m+'</em> of 143';
+  countBox.querySelector('.big').innerHTML=n+' bottle'+(n==1?'':'s')+' &#8594; <em>'+m+'</em> of 143';
   countBox.querySelector('.lede').textContent = n===0
     ? 'Your shelf is empty. Tap any bottle to buy it, or let the page pick for you.'
     : m===0 ? 'Still nothing. A drink needs every one of its ingredients, not some of them.'
     : '__SHELF_LINE__';
-  var made=madeList();
-  panel.innerHTML='<h3>What you can make</h3><div class="sub">'+m+' OF THE 143</div><ul>'
-    +(m?made.map(function(d){return '<li>'+d[0]+' <b>'+d[1]+'</b></li>'}).join('')
+  var made=DR.filter(function(x){return x[2].every(function(i){return !!owned[i]})});
+  pop.innerHTML='<h3>What you can make</h3><div class="sub">'+m+' of the 143</div><ul>'
+    +(m?made.map(function(d){return '<li>'+dot(d[1])+d[0]+'</li>'}).join('')
        :'<li style="opacity:.45;cursor:default">Nothing yet</li>')+'</ul>';
-  panel.classList.add('show'); fade();
+  pop.classList.add('show'); fade();
+  if(!phone()){pop.style.left=(wrap.clientWidth-pop.offsetWidth-22)+'px';pop.style.top='64px'}
 }
 
 /* the greediest bottle available: the one that finishes the most drinks next */
@@ -191,7 +240,7 @@ document.getElementById('mRead').addEventListener('pointerup',
 document.getElementById('mBuy').addEventListener('pointerup',
   function(e){e.stopPropagation();setMode('buy')});
 
-/* Selection is bound to pointerup, never to click: on iOS the first tap on a mark whose
+/* Selection is bound to pointerup, never click: on iOS the first tap on a mark whose
    pointerenter mutates the DOM is swallowed, and the piece would need two taps to answer. */
 nodes.forEach(function(n){
   var i=+n.dataset.i;
@@ -208,9 +257,22 @@ if(matchMedia('(hover:hover) and (pointer:fine)').matches){
     var i=+n.dataset.i;
     n.addEventListener('pointerenter',function(){if(mode==='read')showIng(i)});
   });
-  sheet.addEventListener('pointerleave',function(){if(mode==='read')clear()});
+  sheet.addEventListener('pointerleave',function(e){
+    if(mode==='read'&&!pop.contains(e.relatedTarget))clear()});
 }
 addEventListener('pointerup',function(){if(mode==='read')clear()});
 addEventListener('keydown',function(e){
   if(e.key==='Escape'){if(mode==='buy')setMode('read');else clear()}});
+
+/* the index sends you back to the shelf: find the bottle, flash it, open its card */
+document.querySelectorAll('#grid li').forEach(function(li){
+  li.addEventListener('pointerup',function(e){
+    e.stopPropagation();
+    var i=+li.dataset.i, n=byIng[i]; if(!n)return;
+    if(mode==='buy')setMode('read');
+    n.scrollIntoView({block:'center',behavior:'smooth'});
+    n.classList.add('flash'); setTimeout(function(){n.classList.remove('flash')},1200);
+    setTimeout(function(){showIng(i)},430);
+  });
+});
 </script></body></html>"""

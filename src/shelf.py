@@ -101,9 +101,7 @@ out.append(shelf(tier4[45:], 1092, 0.50, None))
 # ---------------------------------------------------------------- masthead
 out.append(txt(ML, MT + 52, HEADLINE_1, T_DISPLAY, INK))
 out.append(txt(ML, MT + 112, HEADLINE_2, T_DISPLAY, INK))
-DL = ['These 143 classic cocktails call for 177 different',
-      'ingredients. Ninety of them appear in exactly one drink',
-      'and nothing else &#8212; 51% of the bottles, 16% of the pour.']
+DL = DECK_LINES
 for i, line in enumerate(DL):
     out.append(txt(ML, MT + 166 + i * 25, line, T_DECK, INK, op=0.74))
 
@@ -133,13 +131,11 @@ out.append('<path d="%s" stroke="#B23A26" stroke-width="2.6" fill="none" opacity
            'stroke-linecap="round"/>'
            % spath(wob([(ML - 22, 1008), (ML - 32, 1014), (ML - 32, 1046), (ML - 40, 1052),
                         (ML - 32, 1058), (ML - 32, 1090), (ML - 22, 1096)], 0.9, q)))
-out.append(txt(ML, 1146, 'Fifty-nine of the 143 drinks &#8212; two in five &#8212; need at least one '
-               'ingredient', T_DECK, '#B23A26', op=0.95))
-out.append(txt(ML, 1170, 'that appears nowhere else on this page.', T_DECK, '#B23A26', op=0.95))
+out.append(txt(ML, 1146, NOTE_1, T_DECK, '#B23A26', op=0.95))
+out.append(txt(ML, 1170, NOTE_2, T_DECK, '#B23A26', op=0.95))
 out.append(txt(ML, 1198, SHELF_LINE, T_DECK, INK, op=0.6))
 
-out.append(txt(ML, PH - 16, 'TheCocktailDB &#183; the 143 alcoholic cocktails on the IBA official list '
-               'or in its Cocktail category &#183; 579 ingredient slots, 177 distinct.',
+out.append(txt(ML, PH - 16, SOURCE_LINE,
                T_MICRO, INK, op=0.45))
 
 write(OUT_NAME + '.svg', ''.join(out), w=PW, h=PH, bg=GROUND)

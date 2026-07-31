@@ -78,18 +78,25 @@ rows.sort(key=lambda r: r['name'])
 # --- counts, all verified here and printed ---
 bc = collections.Counter(r['base'] for r in rows)
 gc = collections.Counter(r['glass'] for r in rows)
+# An ingredient is counted once per drink that calls for it, not once per slot: three drinks
+# (Kiwi Martini, Mango Mojito, Whiskey Sour) list the same ingredient twice, and the piece says
+# "how many of the 143 drinks call for it", which is a count of drinks.
 ic = collections.Counter()
 for r in rows:
+    for i in set(x.strip().lower() for x in r['ings']):
+        ic[i] += 1
+pour = collections.Counter()                    # slots, for the share-of-the-pour line
+for r in rows:
     for i in r['ings']:
-        ic[i.strip().lower()] += 1
+        pour[i.strip().lower()] += 1
 nc = collections.Counter(r['n'] for r in rows)
 ibac = collections.Counter(r['iba'] for r in rows)
 
 # ingredient -> set of drinks, for the network
 ing_drinks = collections.defaultdict(list)
 for r in rows:
-    for i in r['ings']:
-        ing_drinks[i.strip().lower()].append(r['id'])
+    for i in sorted(set(x.strip().lower() for x in r['ings'])):
+        ing_drinks[i].append(r['id'])
 
 # --- how far a shelf actually gets you ---
 # At each step take the bottle that finishes the most drinks next, ties broken by how many drinks
@@ -118,6 +125,8 @@ stats = {
     'n_ingredients_distinct': len(ic),
     'ingredient_top': ic.most_common(40),
     'ingredients_shared': sum(1 for k, v in ic.items() if v > 1),
+    'slots': sum(pour.values()),
+    'pour_single': sum(pour[k] for k, v in ic.items() if v == 1),
     'ings_per_drink': sorted(nc.items()),
     'iba': ibac.most_common(),
 }

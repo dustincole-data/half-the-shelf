@@ -19,6 +19,7 @@ from page import PAGE
 from shelfgrid import h_of, place, seed_of, ITEMS, TIERS, STACK, SPLIT
 
 T = treatments.get('cutpaper')
+ICON = 'data:image/svg+xml,' + '%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20d%3D%22M11%2030%20L11%2014%20L13.5%2010.5%20L13.5%203%20L18.5%203%20L18.5%2010.5%20L21%2014%20L21%2030%20Z%22%20fill%3D%22%231F9E8E%22%2F%3E%3Cpath%20d%3D%22M16%2030%20L16%203%20L18.5%203%20L18.5%2010.5%20L21%2014%20L21%2030%20Z%22%20fill%3D%22%2317786B%22%2F%3E%3Cpath%20d%3D%22M13%205.4%20L19%205.4%20L19%203%20L13%203%20Z%22%20fill%3D%22%230F5A50%22%2F%3E%3C%2Fsvg%3E'        # the cut-paper bottle, as the tab icon
 SITE = os.path.join(OUT, 'site')
 rng = random.Random(5)
 
@@ -26,8 +27,8 @@ IDX = dict((nm, i) for i, (nm, u) in enumerate(ITEMS))
 DRINKS = sorted(ROWS, key=lambda r: r['name'])
 USES = collections.defaultdict(list)                 # ingredient index -> drink indices
 for di, r in enumerate(DRINKS):
-    for nm in r['ings']:
-        USES[IDX[nm.strip().lower()]].append(di)
+    for nm in set(x.strip().lower() for x in r['ings']):   # once per drink, never once per slot
+        USES[IDX[nm]].append(di)
 
 
 # ---------------------------------------------------------------- the drawing
@@ -141,19 +142,46 @@ def footer():
          'stroke-linecap="round"/>'
          % spath(wob([(ML - 22, 1008), (ML - 32, 1014), (ML - 32, 1046), (ML - 40, 1052),
                       (ML - 32, 1058), (ML - 32, 1090), (ML - 22, 1096)], 0.9, q))]
-    o.append(txt(ML, 1146, 'Fifty-nine of the 143 drinks &#8212; two in five &#8212; need at least '
-                 'one ingredient', T_DECK, '#B23A26', op=0.95))
-    o.append(txt(ML, 1170, 'that appears nowhere else on this page.', T_DECK, '#B23A26', op=0.95))
+    o.append(txt(ML, 1146, NOTE_1, T_DECK, '#B23A26', op=0.95))
+    o.append(txt(ML, 1170, NOTE_2, T_DECK, '#B23A26', op=0.95))
     o.append(txt(ML, 1198, SHELF_LINE, T_DECK, INK, op=0.6))
-    o.append(txt(ML, PH - 16, 'TheCocktailDB &#183; the 143 alcoholic cocktails on the IBA official '
-                 'list or in its Cocktail category &#183; 579 ingredient slots, 177 distinct.',
+    o.append(txt(ML, PH - 16, SOURCE_LINE,
                  T_MICRO, INK, op=0.45))
     return ''.join(o)
 
 
-DECK_LINES = ['These 143 classic cocktails call for 177 different',
-              'ingredients. Ninety of them appear in exactly one drink',
-              'and nothing else &#8212; 51% of the bottles, 16% of the pour.']
+
+
+def index_section():
+    """The ninety-two, listed by the drink that makes you buy them.
+
+    On the poster they are ninety-two nearly identical marks with no room for a name. Here each one
+    gets its name back, filed under the single drink it exists for, worst offenders first."""
+    worst = []
+    for di, r in enumerate(DRINKS):
+        ings = sorted(set(IDX[i.strip().lower()] for i in r['ings']))
+        solo = [i for i in ings if len(USES[i]) == 1]
+        if solo:
+            worst.append((len(solo), r['name'], r['base'], solo))
+    worst.sort(key=lambda x: (-x[0], x[1]))
+    # the index and the poster are two renderings of one set; if they ever disagree, stop
+    listed = sorted(i for _, _, _, solo in worst for i in solo)
+    assert len(listed) == len(set(listed)) == len(SINGLE), (len(listed), len(SINGLE))
+    assert len(worst) == N_WITH_SINGLE, (len(worst), N_WITH_SINGLE)
+    cards = []
+    for n, name, base, solo in worst:
+        cards.append('<article><h4><i style="background:%s"></i>%s <s>%s</s></h4><ul>%s</ul></article>'
+                     % (HUE.get(base, '#B9A489'), esc(name), esc(base),
+                        ''.join('<li data-i="%d">%s</li>' % (i, esc(nice(ITEMS[i][0])))
+                                for i in solo)))
+    lede = ('%s of the 177 bottles pour exactly one drink and nothing else. They are not exotic by '
+            'accident — they are the price of these <b>%d drinks</b>, each of which needs at '
+            'least one bottle no other drink on the page will ever ask for again. %s of them ask '
+            'for more than one. Click any bottle to find it back on the shelf.'
+            % (cap1(word(len(SINGLE))), len(worst),
+               cap1(word(sum(1 for w in worst if w[0] > 1)))))
+    return ('<section id="ninety"><h2>The %s</h2><p class="lede">%s</p><div id="grid">%s</div>'
+            '</section>' % (word(len(SINGLE)), lede, ''.join(cards)))
 
 
 # ---------------------------------------------------------------- the page
@@ -168,7 +196,10 @@ def build():
     html = (PAGE.replace('__SVG__', svg)
                 .replace('__ING__', json.dumps(ing, separators=(',', ':')))
                 .replace('__DR__', json.dumps(dr, separators=(',', ':')))
-                .replace('__SHELF_LINE__', SHELF_LINE))
+                .replace('__SHELF_LINE__', SHELF_LINE)
+                .replace('__HUE__', json.dumps(HUE, separators=(',', ':')))
+                .replace('__INDEX__', index_section())
+                .replace('__ICON__', ICON))
     os.makedirs(SITE, exist_ok=True)
     path = os.path.join(SITE, 'index.html')
     open(path, 'w', encoding='utf-8').write(html)
