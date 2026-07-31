@@ -6,16 +6,12 @@
 from layout import *
 import treatments
 from treatments import GROUND, INK, FAINT
+from shelfgrid import h_of, place, seed_of, TIER1, TIER2, TIER3, TIER4
 
 T = treatments.get()
 OUT_NAME = os.environ.get('SHELF_OUT') or 'shelf'
 
 rng = random.Random(5)
-items = sorted(USE.items(), key=lambda kv: (-kv[1], kv[0]))
-
-
-def h_of(u):
-    return 20 + 17.0 * math.sqrt(u)          # 37 at one drink, 130 at forty-two
 
 
 def draw(name, uses, cx, by, chroma, seed, detail=True):
@@ -25,10 +21,7 @@ def draw(name, uses, cx, by, chroma, seed, detail=True):
 # ---------------------------------------------------------------- the stack
 out = [paper(9, 3600, col='#4A4234', op=0.032, w=PW, h=PH, rmax=1.3)]
 
-tier1 = [x for x in items if x[1] >= 12]
-tier2 = [x for x in items if 5 <= x[1] < 12]
-tier3 = [x for x in items if 2 <= x[1] < 5]
-tier4 = [x for x in items if x[1] == 1]
+tier1, tier2, tier3, tier4 = TIER1, TIER2, TIER3, TIER4
 print('tiers %d / %d / %d / %d = %d' % (len(tier1), len(tier2), len(tier3), len(tier4),
                                         len(tier1) + len(tier2) + len(tier3) + len(tier4)))
 
@@ -54,22 +47,12 @@ def fit(label, maxw, size):
     return [label], max(7.2, maxw / (len(label) * CHW))
 
 
-def widths(row):
-    return [T.width(kind_of(nm), h_of(u)) for nm, u in row]
-
-
 def shelf(row, by, chroma, label):
-    ws = widths(row)
-    gap = (CW - sum(ws)) / max(1, len(row) - 1)
-    used = sum(ws) + gap * (len(row) - 1)
-    x = ML + (CW - used) / 2
-    body, centres = [], []
-    for (nm, u), w in zip(row, ws):
-        cx = x + w / 2
-        centres.append((cx, nm, u, w))
-        sv, _ = draw(nm, u, cx, by, chroma, hash(nm) & 0xffff, detail=chroma >= 0.95)
+    centres, gap = place(row, T)
+    body = []
+    for cx, nm, u, w in centres:
+        sv, _ = draw(nm, u, cx, by, chroma, seed_of(nm), detail=chroma >= 0.95)
         body.append(sv)
-        x += w + gap
     body.insert(0, '<path d="%s" stroke="%s" stroke-width="%.1f" fill="none" opacity="%.2f" '
                    'stroke-linecap="round"/>'
                    % (rough_line(ML - 8, by + 3, PW - MR + 8, by + 4, 1.3, rng), INK,
@@ -153,8 +136,7 @@ out.append('<path d="%s" stroke="#B23A26" stroke-width="2.6" fill="none" opacity
 out.append(txt(ML, 1146, 'Fifty-nine of the 143 drinks &#8212; two in five &#8212; need at least one '
                'ingredient', T_DECK, '#B23A26', op=0.95))
 out.append(txt(ML, 1170, 'that appears nowhere else on this page.', T_DECK, '#B23A26', op=0.95))
-out.append(txt(ML, 1198, 'The thirty best-chosen bottles you could buy would still complete only 22 '
-               'of the 143.', T_DECK, INK, op=0.6))
+out.append(txt(ML, 1198, SHELF_LINE, T_DECK, INK, op=0.6))
 
 out.append(txt(ML, PH - 16, 'TheCocktailDB &#183; the 143 alcoholic cocktails on the IBA official list '
                'or in its Cocktail category &#183; 579 ingredient slots, 177 distinct.',

@@ -5,9 +5,14 @@ A data graphic about what a cocktail canon is actually made of.
 **The finding, and the whole point of the piece:** these 143 classic cocktails call for 177 different
 ingredients, and **90 of them appear in exactly one drink and nothing else** — 51% of the bottles, 16%
 of the pour. Two in five of the drinks (59 of 143) need at least one ingredient no other drink uses,
-and the thirty best-chosen bottles you could buy would still complete only 22 of the 143.
+and thirty bottles, each chosen to unlock the most drinks, still make only 28 of the 143.
 
 Every number on the page is computed from the source at build time. Nothing is asserted by hand.
+That was not quite true until 2026-07-31: the thirty-bottle figure was a hand-typed `22`, and it was
+wrong on both readings — the thirty *most-used* bottles finish 21, and thirty *greedily-chosen* ones
+finish 28. It is now computed in `prep.py` and read by both the poster and the page, so it cannot
+drift again. The pick is greedy, which is a lower bound and not a proof of optimality, and the
+sentence on the page claims only what the code actually computes.
 
 ## Where it came from
 
@@ -23,6 +28,7 @@ python src/prep.py           # derive the set and print every count         -> d
 python src/shelf.py          # the poster                                   -> out/shelf.svg
 python src/render.py shelf 1000 1250                                     #  -> out/shelf.png
 python src/options.py        # every art treatment, judged side by side     -> out/options.png
+python src/site.py           # the same piece, interactive                  -> out/site/index.html
 ```
 
 `TREATMENT=<key> SHELF_OUT=<name> python src/shelf.py` draws the poster with any of the treatments
@@ -99,8 +105,35 @@ being whether the tail stays a picket fence.
 **Cut paper won, and was then finished.** All six live on in `src/treatments.py`, the previously
 shipped drawing among them as `current`, so the comparison is rebuildable rather than remembered.
 
+## The interactive one
+
+`out/site/index.html` — one file, no build step, no dependencies, no network. Same data, same
+geometry, same cut-paper art; `src/shelfgrid.py` holds the placement both of them read, so a bottle
+cannot move on one and not the other.
+
+It exists because of a limit the recipe names outright: a shelf is a distribution, and the
+ingredient-to-drink structure is a genuine bipartite graph that a static page cannot show. So the
+page shows it.
+
+- **Point at a bottle.** The other 176 ghost, and the panel names every drink that calls for it.
+  Point at something in the tail and the answer is one drink — which is the finding, one object at
+  a time.
+- **Then jump the graph.** Click a drink and it lights every bottle it needs, wherever they are on
+  the page. Click one of those and you are back on the ingredient side.
+- **Buy the shelf.** The page empties and you fill it a bottle at a time, or let it pick greedily
+  for you. The counter is the finding, self-administered: thirty bottles, thirty lit marks scattered
+  across a page of 177, and 28 drinks.
+
+Selection is bound to `pointerup`, never `click`, and hover is enabled only behind
+`(hover:hover) and (pointer:fine)` — on iOS the first tap on a mark whose `pointerenter` mutates the
+DOM gets swallowed, and the piece would need two taps to answer.
+
 ## Open
 
-- **Interaction.** The piece is a static SVG. Hovering an ingredient to reveal the drinks that use it
-  (and ghosting the rest of the shelf) is designed but not built.
+- **Phone tail.** At 390px the ninety are about 7px wide, so the tail is a pinch-zoom job and the
+  page says so. Full-width is kept deliberately: squeezing the shelf is what makes the silhouette
+  readable, and that silhouette is the whole argument.
 - **Ground.** White, chosen 2026-07-31 over the warm cream it was drafted on.
+- **Reproducibility.** Object seeds come from `hash(name)`, which Python salts per process, so every
+  rebuild reshuffles the wobble. Same design, different hand. A one-line fix (`zlib.crc32`) that
+  changes every path on the page, so it has not been taken.

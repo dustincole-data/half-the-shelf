@@ -19,6 +19,15 @@ SINGLE = set(k for k, v in USE.items() if v == 1)
 SHARED = [k for k, v in USE.items() if v > 1]
 N_WITH_SINGLE = sum(1 for r in ROWS if any(i.strip().lower() in SINGLE for i in r['ings']))
 
+# How far a shelf actually gets you, computed in prep.py rather than asserted here. The pick is
+# greedy, so this is what a good shopper can reach, not a proof that nobody could do better --
+# which is exactly what the sentence on the page is allowed to claim.
+GREEDY = S.get('greedy') or []
+GREEDY_N = 30
+GREEDY_MADE = GREEDY[GREEDY_N - 1][1] if len(GREEDY) >= GREEDY_N else 0
+SHELF_LINE = ('Thirty bottles, each chosen to unlock the most drinks, still make only %d of the %d.'
+              % (GREEDY_MADE, len(ROWS)))
+
 HEADLINE_1 = 'Half the shelf'
 HEADLINE_2 = 'pours one drink'
 DECK = ('These 143 classic cocktails call for %d different ingredients. %d of them &#8212; more than '

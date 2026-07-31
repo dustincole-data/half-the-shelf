@@ -91,8 +91,28 @@ for r in rows:
     for i in r['ings']:
         ing_drinks[i.strip().lower()].append(r['id'])
 
+# --- how far a shelf actually gets you ---
+# At each step take the bottle that finishes the most drinks next, ties broken by how many drinks
+# the bottle appears in at all. This is a greedy lower bound on the best possible thirty, not a
+# proof of optimality, so the wording on the page claims only what this computes.
+sets = [set(i.strip().lower() for i in r['ings']) for r in rows]
+own, curve = set(), []
+for _ in range(40):
+    pick, pg, pf = None, -1, -1
+    for k in ic:
+        if k in own:
+            continue
+        own.add(k)
+        g = sum(1 for s in sets if s <= own)
+        own.discard(k)
+        if g > pg or (g == pg and ic[k] > pf):
+            pick, pg, pf = k, g, ic[k]
+    own.add(pick)
+    curve.append([pick, pg])
+
 stats = {
     'n_drinks': len(rows),
+    'greedy': curve,
     'base': bc.most_common(),
     'glass': gc.most_common(),
     'n_ingredients_distinct': len(ic),
