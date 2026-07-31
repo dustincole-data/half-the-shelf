@@ -102,8 +102,9 @@ class Treatment(object):
 
 # ---------------------------------------------------------------- 0 · current (the control)
 class Current(Treatment):
-    key, title = 'current', 'Current — shipped'
-    note = 'Eight archetypes, one white label patch, highlight bar. The control.'
+    key, title = 'current', 'Previous — the drawing this replaced'
+    note = ('Eight archetypes, one white label patch, a highlight bar and an ink keyline. '
+            'The control the five were judged against.')
 
     @classmethod
     def width(cls, kind, h):
@@ -191,15 +192,25 @@ class Current(Treatment):
         return ''.join(g), w
 
 
-# ---------------------------------------------------------------- A · cut paper
+# ---------------------------------------------------------------- A · cut paper  (the shipped art)
 class CutPaper(Treatment):
-    key, title = 'cutpaper', 'A · Cut paper'
-    note = ('No outline anywhere. Flat colour, scissor-straight edges, one hard shadow tone down '
-            'the right third. The cast shadow does the work the keyline used to.')
+    key, title = 'cutpaper', 'A · Cut paper — chosen, and shipped'
+    note = ('No outline anywhere. Three or four papers per object — body, closure, and a shadow '
+            'laid over everything to the right of one straight cut. The cast shadow does the work '
+            'the keyline used to.')
+
+    LIGHT = 0.78                                     # the shadow paper, as a shade of the body
+    CAP = 0.66                                       # the closure paper
+    CAPY = {'jar': 0.86, 'can': 0.90}                # where the closure starts; default below
 
     @classmethod
     def paint(cls, kind, raw, col, chroma, cx, by, h, q, cid, fine):
-        dark = mix(col, shade(raw, 0.60), 0.55)
+        # Every tone is a shade of the *rationed* colour, and the shade itself is rationed by tier
+        # as well: a full-strength shadow paper on all ninety would make the quiet half of the page
+        # heavier than the top shelf, which is the one thing the encoding cannot afford.
+        light = cls.LIGHT + (1 - cls.LIGHT) * 0.62 * (1 - chroma)
+        sh = shade(col, light)
+        far = h * 1.4
         if kind in PROFILES:
             d, w = body(cx, by, h, kind, q, amp=max(0.5, h * 0.010), smooth=False)
         elif kind == 'sprig':
@@ -208,32 +219,57 @@ class CutPaper(Treatment):
             r = h * (R_CITRUS if kind == 'citrus' else R_CHERRY)
             d, w = rough_circle(cx, by - r, r, amp=max(0.5, r * 0.035),
                                 n=max(7, int(r / 3.4) + 6), rng=q), r * 2
-        tilt = q.uniform(-1.1, 1.1)
-        g = ['<g transform="rotate(%.2f %.1f %.1f)">' % (tilt, cx, by), drop(d, h, 0.16),
+
+        def cut(pts, fill, op=None):
+            return ('<path d="%s" fill="%s"%s/>'
+                    % (spath(pts, close=True, smooth=False), fill,
+                       '' if op is None else ' opacity="%.2f"' % op))
+
+        g = ['<g transform="rotate(%.2f %.1f %.1f)">' % (q.uniform(-1.1, 1.1), cx, by),
+             drop(d, h, 0.16 * (0.55 + 0.45 * chroma)),
              '<path d="%s" fill="%s"/>' % (d, col)]
-        inner = ['<path d="%s" fill="%s"/>'                       # the shadow side, cut straight
-                 % (spath([(cx + w * 0.14, by + 2), (cx + w, by + 2), (cx + w, by - h - 2),
-                           (cx + w * 0.10, by - h - 2)], close=True, smooth=False), dark)]
-        if kind in ('tall', 'short', 'dash', 'jar'):               # cap as its own cut piece
-            capy = by - h * (0.86 if kind == 'jar' else 0.88)
-            inner.append('<path d="%s" fill="%s" opacity="0.85"/>'
-                         % (spath([(cx - w, capy), (cx + w, capy - q.uniform(0.4, 1.4)),
-                                   (cx + w, by - h - 3), (cx - w, by - h - 3)],
-                                  close=True, smooth=False), shade(raw, 0.62 + 0.30 * (1 - chroma))))
-        if kind == 'citrus':
-            r = h * R_CITRUS
-            pale = mix(col, GROUND, 0.62)
-            for i in range(8):                                     # eight cut wedges, alternating
-                if i % 2:
-                    continue
-                a0, a1 = i * math.pi / 4 + 0.06, (i + 1) * math.pi / 4 - 0.06
+        inner = []
+
+        if kind in BOTTLES:
+            xs = cx + w * q.uniform(0.06, 0.15)                   # the one straight cut
+            cap = shade(col, cls.CAP + (1 - cls.CAP) * 0.58 * (1 - chroma))
+            cy = by - h * cls.CAPY.get(kind, 0.885)
+            e = max(0.35, h * 0.008)                              # the closure cut, off true
+            cyl, cyr = cy + q.uniform(-e, e), cy + q.uniform(-e, e)
+            cym = cyl + (cyr - cyl) * ((xs - (cx - far)) / (2 * far))
+            inner.append(cut([(xs, by + far), (cx + far, by + far), (cx + far, cyr), (xs, cym)], sh))
+            inner.append(cut([(cx - far, cyl), (cx + far, cyr), (cx + far, by - far),
+                              (cx - far, by - far)], cap))
+            inner.append(cut([(xs, cym), (cx + far, cyr), (cx + far, by - far), (xs, by - far)],
+                             shade(cap, light)))
+        elif kind == 'sprig':
+            xs = cx + w * q.uniform(0.02, 0.12)
+            inner.append(cut([(xs, by + far), (cx + far, by + far), (cx + far, by - far),
+                              (xs, by - far)], sh))
+            if fine and h > 46:                                   # the vein, cut out of the leaf
+                inner.append('<path d="%s" stroke="%s" stroke-width="%.1f" fill="none"/>'
+                             % (rough_line(cx - w * 0.04, by - h * 0.06, cx + w * 0.06,
+                                           by - h * 0.94, 0.4, q), GROUND, max(0.9, w * 0.075)))
+        else:
+            r = h * (R_CITRUS if kind == 'citrus' else R_CHERRY)
+            if kind == 'citrus':                                  # rind, then flesh, then segments
                 inner.append('<path d="%s" fill="%s"/>'
-                             % (spath([(cx, by - r),
-                                       (cx + r * math.cos(a0), by - r + r * math.sin(a0)),
-                                       (cx + r * math.cos((a0 + a1) / 2) * 1.02,
-                                        by - r + r * math.sin((a0 + a1) / 2) * 1.02),
-                                       (cx + r * math.cos(a1), by - r + r * math.sin(a1))],
-                                      close=True, smooth=False), pale))
+                             % (rough_circle(cx, by - r, r * 0.78, amp=max(0.4, r * 0.030),
+                                             n=max(7, int(r / 3.4) + 6), rng=q),
+                                mix(col, GROUND, 0.52)))
+                if fine and h > 46:
+                    for i in range(8):
+                        a0 = i * math.pi / 4 + q.uniform(-0.05, 0.05)
+                        inner.append(cut([(cx, by - r),
+                                          (cx + r * 0.84 * math.cos(a0 - 0.055),
+                                           by - r + r * 0.84 * math.sin(a0 - 0.055)),
+                                          (cx + r * 0.84 * math.cos(a0 + 0.055),
+                                           by - r + r * 0.84 * math.sin(a0 + 0.055))], col))
+            # a flat disc lit from the left keeps its shadow as a crescent, not a straight cut
+            inner.append('<path d="%s %s" fill-rule="evenodd" fill="%s"/>'
+                         % (d, rough_circle(cx - r * 0.30, by - r, r, amp=max(0.4, r * 0.030),
+                                            n=max(7, int(r / 3.4) + 6), rng=q), sh))
+
         g.append(clipped(cid, d, inner))
         g.append('</g>')
         return ''.join(g), w
@@ -461,4 +497,4 @@ TREATMENTS = dict((t.key, t) for t in OPTIONS)
 
 
 def get(key=None):
-    return TREATMENTS[key or os.environ.get('TREATMENT') or 'current']
+    return TREATMENTS[key or os.environ.get('TREATMENT') or 'cutpaper']
