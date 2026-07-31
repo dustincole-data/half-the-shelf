@@ -6,3 +6,6 @@ out/site/*
 .chrome-profile/
 __pycache__/
 *.pyc
+
+.vercel
+.env*
