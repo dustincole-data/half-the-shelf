@@ -34,9 +34,12 @@ svg{display:block;width:100%;height:auto}
 #pop .sub{font-size:9.5px;opacity:.5;margin-top:3px;letter-spacing:.7px;text-transform:uppercase}
 #pop .one{font-size:15px;margin-top:9px;color:#B23A26;line-height:1.2;cursor:pointer}
 #pop .with{font-size:9.5px;opacity:.5;margin-top:9px;letter-spacing:.7px;text-transform:uppercase}
-#pop ul{list-style:none;margin-top:7px;max-height:216px;overflow:auto;scrollbar-width:thin;
-        columns:2;column-gap:12px}
-#pop ul.one-col{columns:1}
+/* a grid, not CSS columns: multi-column inside a capped height spills into MORE columns
+   sideways, which gave gin's forty-two drinks a horizontal scrollbar */
+#pop ul{list-style:none;margin-top:7px;max-height:212px;overflow-y:auto;overflow-x:hidden;
+        scrollbar-width:thin;display:grid;grid-template-columns:1fr 1fr;column-gap:12px;
+        align-content:start}
+#pop ul.one-col{grid-template-columns:1fr}
 #pop li{font-size:10.5px;line-height:1.62;opacity:.85;cursor:pointer;white-space:nowrap;
         overflow:hidden;text-overflow:ellipsis;break-inside:avoid}
 #pop li:hover{opacity:1;color:#B23A26}
@@ -93,7 +96,7 @@ button.on{background:#B23A26;border-color:#B23A26;color:#fff}
        padding:14px 16px 20px;box-shadow:0 -2px 18px rgba(0,0,0,.18)}
   #pop h3{font-size:20px}#pop .sub{font-size:11px}#pop .one{font-size:19px}
   #pop .with{font-size:11px}
-  #pop ul{max-height:32vh}#pop li{font-size:13px;line-height:1.95}
+  #pop ul{max-height:32vh}#pop li{font-size:13px;line-height:1.9}
   #bar{position:static;display:flex;flex-wrap:wrap;padding:10px 12px;background:#fff;
        border-bottom:1px solid rgba(46,42,36,.14);gap:7px}
   button{font-size:11px;padding:9px 12px;border-width:1px}
@@ -128,7 +131,9 @@ function phone(){return matchMedia('(max-width:719px)').matches}
 
 var mode='read', owned={}, ownedN=0;
 
-function rescale(){wrap.style.setProperty('--s', wrap.clientWidth/1000)}
+function rescale(){wrap.style.setProperty('--s', wrap.clientWidth/1000);
+  /* a desktop anchor left inline on a now-narrow window is stale; the sheet re-pins itself */
+  pop.style.left=''; pop.style.top=''; if(pop.classList.contains('show'))clear()}
 addEventListener('resize',rescale); rescale();
 
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
@@ -141,14 +146,23 @@ function only(list){var o={};list.forEach(function(i){o[i]=1});return o}
    off the top, clamped so it never leaves the page on either side. */
 function anchor(i){
   if(phone()){pop.style.left='';pop.style.top='';return}
-  var n=byIng[i]; if(!n)return;
-  var b=n.getBBox(), s=wrap.clientWidth/1000;
+  var g=byIng[i]; if(!g)return;
+  var s=wrap.clientWidth/1000, GAP=9;
   var svgTop=sheet.getBoundingClientRect().top-wrap.getBoundingClientRect().top;
-  var cx=(b.x+b.width/2)*s, top=svgTop+b.y*s, bot=svgTop+(b.y+b.height)*s;
-  var pw=pop.offsetWidth, ph=pop.offsetHeight;
-  var y=top-ph-9; if(y<4) y=bot+9;
-  pop.style.left=Math.max(8,Math.min(wrap.clientWidth-pw-8,cx-pw/2))+'px';
-  pop.style.top=y+'px';
+  var cx=+g.dataset.x*s, h=+g.dataset.h*s, w=+g.dataset.w*s;
+  var top=svgTop+(+g.dataset.y-+g.dataset.h)*s, bot=svgTop+ +g.dataset.y*s;
+  var pw=pop.offsetWidth, ph=pop.offsetHeight, W=wrap.clientWidth, H=wrap.clientHeight;
+  var x=Math.max(8,Math.min(W-pw-8,cx-pw/2)), y=top-ph-GAP;
+  if(y<4){
+    /* No room above - which is the normal case for the two tallest bottles once the poster is
+       scaled down. Sit beside the mark rather than dropping below it: flipping under sent gin's
+       card three hundred pixels down the page, nowhere near the bottle it was describing. */
+    var side=Math.max(4,Math.min(H-ph-4, top+h/2-ph/2));
+    if(cx+w/2+GAP+pw<=W-8){x=cx+w/2+GAP; y=side}
+    else if(cx-w/2-GAP-pw>=8){x=cx-w/2-GAP-pw; y=side}
+    else y=bot+GAP;
+  }
+  pop.style.left=x+'px'; pop.style.top=y+'px';
 }
 function fade(){var u=pop.querySelector('ul');
   if(u){u.classList.toggle('one-col',u.children.length<7);

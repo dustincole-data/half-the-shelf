@@ -156,8 +156,15 @@ page shows it.
 **The card is anchored to the bottle, not parked at the top of the page.** The first build put one
 readout in the masthead, which meant that pointing at anything in the tail — 900px down, and the
 entire point of the piece — put the answer off screen. The card now sits against the mark it
-describes, flipping above or below and clamping to the page edges; below 720px it becomes a bottom
-sheet that is always in frame.
+describes; below 720px it becomes a bottom sheet that is always in frame.
+
+Anchoring reads each object's real drawn box out of `data-x/y/h/w`, **not** `getBBox()`: the
+cut-paper shadow and closure papers are cut oversize and clipped away, and `getBBox()` still sees
+them, which threw the card more than fifty pixels off the tallest bottles. Placement prefers above,
+and when the poster is scaled down far enough that the tallest bottles leave no room, it goes
+**beside** the mark rather than below it — flipping under sent gin's card three hundred pixels down
+the page, nowhere near the bottle it was describing. Swept all 177 marks at 1280px and at 745px: none
+covers its own bottle, leaves the page, or scrolls sideways.
 
 Selection is bound to `pointerup`, never `click`, and hover is enabled only behind
 `(hover:hover) and (pointer:fine)` — on iOS the first tap on a mark whose `pointerenter` mutates the

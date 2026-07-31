@@ -60,9 +60,14 @@ def objects():
                 sv, _ = T.render(nm, h_of(u), cx, by, chroma, seed_of(nm), fine=chroma >= 0.95)
                 h = h_of(u)
                 pad = min(gap / 2, 7)
-                out.append('<g class="o" data-i="%d">%s'
+                # x/y/h/w are the object's real drawn box. getBBox() would also see the shadow
+                # and closure papers, which are cut oversize and clipped away, and would drag the
+                # card off the mark by more than fifty pixels on the tallest bottles.
+                out.append('<g class="o" data-i="%d" data-x="%.1f" data-y="%.1f" data-h="%.1f" '
+                           'data-w="%.1f">%s'
                            '<rect class="hit" x="%.1f" y="%.1f" width="%.1f" height="%.1f"/></g>'
-                           % (IDX[nm], sv, cx - w / 2 - pad, by - h - 4, w + pad * 2, h + 10))
+                           % (IDX[nm], cx, by, h, w, sv,
+                              cx - w / 2 - pad, by - h - 4, w + pad * 2, h + 10))
                 geo[IDX[nm]] = (round(cx, 1), round(by, 1), round(h, 1))
             if label == 'flat':
                 slot = (CW - gap * 0.5) / len(part)
