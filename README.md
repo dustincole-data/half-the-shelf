@@ -171,6 +171,16 @@ Selection is bound to `pointerup`, never `click`, and hover is enabled only behi
 DOM gets swallowed, and the piece would need two taps to answer. Widths use `min(100%, …)` and never
 `100vw`, which counts the scrollbar and hands you a horizontal one.
 
+### It is deployed as a committed artifact, not built in CI
+
+`out/` is ignored except for `out/site/index.html`, which is committed and served as-is
+(`vercel.json` points the output directory at `out/site`; there is no build step and no Python on the
+host). This is deliberate: object seeds come from `hash(name)`, which Python salts per process, so a
+CI rebuild would redraw every path on the page on every deploy. Committing the file ships the exact
+drawing that was judged. Rebuild locally with `python src/site.py` and commit the result.
+
+Live at **halftheshelf.dustincoledata.com**.
+
 ## Open
 
 - **Phone tail.** At 390px the tail bottles are about 7px wide, so it is a pinch-zoom job and the
